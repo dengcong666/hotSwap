@@ -1,5 +1,9 @@
 这是一个动态服务发布模型的初体验。
 
+在不重启hotSwap进程的前提下，可以运行期新增http服务
+在不重启hotSwap进程的前提下，可以运行期新增http服务
+在不重启hotSwap进程的前提下，可以运行期新增http服务
+
 重点需要关注的：
 1. ModuleClassLoader作为自定义类加载器加载外部依赖包，ModuleClassLoader会先寻找外部依赖包下的class, 未找到才委托给父类加载器寻找。
 2. 发送http请求https://127.0.0.1/refresh后 RefreshClass将加载给定目录下jar包，获得jar包内的class，完成类的控制反转和依赖注入。
@@ -25,3 +29,4 @@ INSERT INTO "bank" VALUES ('666', '666', 'xxx');
 5. 发送 post 请求：curl -H "Content-Type:application/json" -X POST -d '{"java.lang.Integer":666}' http://127.0.0.1:8081/bankServiceImpl/getBank
    能够得到正常结果
 
+以上，在没重启hotSwap进程的前提下，在程序运行期动态提供了 http://127.0.0.1:8081/bankServiceImpl/getBank的服务
