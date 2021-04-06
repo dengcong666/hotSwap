@@ -127,7 +127,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
                 } catch (Exception e) {
                 }
             }
-            Value value = AnnotationUtils.findAnnotation(beanClazz, Value.class);
+            Value value = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Value.class);
             if (value != null) {
                 //TODO 注入Environment信息
             }
