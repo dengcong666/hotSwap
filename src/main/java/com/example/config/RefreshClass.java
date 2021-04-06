@@ -96,7 +96,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
         if (annotation != null) {
             BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(beanClazz);
             String simpleName = beanClazz.getSimpleName();
-            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1, simpleName.length());
+            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
             beanDefinitionRegistry.registerBeanDefinition(simpleName, builder.getBeanDefinition());
         }
     }
@@ -104,7 +104,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
     private void DI(Class<?> beanClazz) {
         //注入容器对象
         String simpleName = beanClazz.getSimpleName();
-        simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1, simpleName.length());
+        simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
         Object bean = configurableListableBeanFactory.getBean(simpleName, beanClazz);
         Field[] declaredFields = beanClazz.getDeclaredFields();
         for (Field field : declaredFields) {
