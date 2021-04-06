@@ -102,36 +102,40 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
     }
 
     private void DI(Class<?> beanClazz) {
-        //注入容器对象
-        String simpleName = beanClazz.getSimpleName();
-        simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
-        Object bean = configurableListableBeanFactory.getBean(simpleName, beanClazz);
-        Field[] declaredFields = beanClazz.getDeclaredFields();
-        for (Field field : declaredFields) {
-            Autowired autowired = AnnotatedElementUtils.findMergedAnnotation(field, Autowired.class);
-            Qualifier qualifier = AnnotatedElementUtils.findMergedAnnotation(field, Qualifier.class);
-            Resource resource = AnnotatedElementUtils.findMergedAnnotation(field, Resource.class);
-            if (autowired != null || qualifier != null || resource != null) {
-                field.setAccessible(true);
-                Class<?> type = field.getType();
-                String name = field.getName();
-                try {
-                    Map<String, ?> beansOfType = applicationContext.getBeansOfType(type);
-                    if (beansOfType.size() == 1) {
-                        field.set(bean, beansOfType.values().iterator().next());
-                        System.out.println(beanClazz.getName() + "注入属性" + name);
-                    } else if (beansOfType.size() > 1) {
-                        field.set(bean, beansOfType.get(name));
-                        System.out.println(beanClazz.getName() + "注入属性" + name);
+        Component annotation = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Component.class);
+        if (annotation != null) {
+            //注入容器对象
+            String simpleName = beanClazz.getSimpleName();
+            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
+            Object bean = configurableListableBeanFactory.getBean(simpleName, beanClazz);
+            Field[] declaredFields = beanClazz.getDeclaredFields();
+            for (Field field : declaredFields) {
+                Autowired autowired = AnnotatedElementUtils.findMergedAnnotation(field, Autowired.class);
+                Qualifier qualifier = AnnotatedElementUtils.findMergedAnnotation(field, Qualifier.class);
+                Resource resource = AnnotatedElementUtils.findMergedAnnotation(field, Resource.class);
+                if (autowired != null || qualifier != null || resource != null) {
+                    field.setAccessible(true);
+                    Class<?> type = field.getType();
+                    String name = field.getName();
+                    try {
+                        Map<String, ?> beansOfType = applicationContext.getBeansOfType(type);
+                        if (beansOfType.size() == 1) {
+                            field.set(bean, beansOfType.values().iterator().next());
+                            System.out.println(beanClazz.getName() + "注入属性" + name);
+                        } else if (beansOfType.size() > 1) {
+                            field.set(bean, beansOfType.get(name));
+                            System.out.println(beanClazz.getName() + "注入属性" + name);
+                        }
+                    } catch (Exception e) {
                     }
-                } catch (Exception e) {
+                }
+                Value value = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Value.class);
+                if (value != null) {
+                    //TODO 注入Environment信息
                 }
             }
-            Value value = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Value.class);
-            if (value != null) {
-                //TODO 注入Environment信息
-            }
         }
+
     }
 
     @Override
