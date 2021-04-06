@@ -76,8 +76,12 @@ public class CommonController implements ApplicationContextAware {
         for (Map.Entry<String, Object> entry : linkedHashMap.entrySet()) {
             //防止两个参数类型相同时key冲突问题，类型_xxx
             Class<?> type = Class.forName(entry.getKey().split("_")[0]);
-            Object value = GSON.fromJson(String.valueOf(entry.getValue()), type);
-            params.add(value);
+            if (StringUtils.isBlank(String.valueOf(entry.getValue()))) {
+                params.add(null);
+            } else {
+                Object value = GSON.fromJson(String.valueOf(entry.getValue()), type);
+                params.add(value);
+            }
         }
         return params.toArray();
     }
