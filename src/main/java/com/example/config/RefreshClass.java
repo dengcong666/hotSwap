@@ -81,6 +81,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
                 iocAndDI(beanClazz);
             }
         }
+        //使实例中的@Controller和@RequestMapping等注解生效
         DispatcherServlet dispatcherServlet = applicationContext.getBean(DispatcherServlet.class);
         refresh(dispatcherServlet);
     }
