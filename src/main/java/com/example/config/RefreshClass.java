@@ -1,12 +1,7 @@
 package com.example.config;
 
 import com.example.classload.ModuleClassLoader;
-import com.example.controller.CommonController;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -15,21 +10,20 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.DispatcherServlet;
+import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import javax.annotation.Resource;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -87,9 +81,11 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
                 iocAndDI(beanClazz);
             }
         }
+        DispatcherServlet dispatcherServlet = applicationContext.getBean(DispatcherServlet.class);
+        refresh(dispatcherServlet);
     }
 
-    private void iocAndDI(Class<?> beanClazz) {
+    private static void iocAndDI(Class<?> beanClazz) {
         Component annotation = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Component.class);
         if (annotation != null) {
             BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(beanClazz);
@@ -101,6 +97,20 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
             beanDefinitionRegistry.registerBeanDefinition(simpleName, beanDefinition);
         }
     }
+
+    private static void refresh(DispatcherServlet dispatcherServlet) {
+        try {
+            List<HandlerMapping> handlerMappings = dispatcherServlet.getHandlerMappings();
+            for (HandlerMapping o : handlerMappings) {
+                if (o instanceof RequestMappingHandlerMapping) {
+                    ((RequestMappingHandlerMapping) o).afterPropertiesSet();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
