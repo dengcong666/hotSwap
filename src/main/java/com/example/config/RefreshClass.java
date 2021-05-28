@@ -60,6 +60,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
     }
 
     public void handJarFiles(File[] jarFiles) throws Exception {
+        System.out.println("加载外部jar包前实例个数:" + applicationContext.getBeanDefinitionCount());
         for (File file : jarFiles) {
             JarFile jarFile = new JarFile(file.getAbsoluteFile());
             Enumeration<JarEntry> entries = jarFile.entries();
@@ -81,6 +82,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
                 iocAndDI(beanClazz);
             }
         }
+        System.out.println("加载外部jar包之后实例个数:" + applicationContext.getBeanDefinitionCount());
         //使实例中的@Controller和@RequestMapping等注解生效
         DispatcherServlet dispatcherServlet = applicationContext.getBean(DispatcherServlet.class);
         refresh(dispatcherServlet);
