@@ -1,7 +1,7 @@
-package com.example.config;
+package com.example.hotswapper;
 
 
-import com.sun.jdi.connect.IllegalConnectorArgumentsException;
+import com.example.classload.JarLoadClass;
 import org.apache.ibatis.javassist.ClassPool;
 import org.apache.ibatis.javassist.CtClass;
 import org.apache.ibatis.javassist.CtMethod;
@@ -22,6 +22,7 @@ public class ModifyClass {
         ClassPool classPool = ClassPool.getDefault();
         classPool.appendClassPath(new LoaderClassPath(JarLoadClass.moduleClassLoader));
         CtClass ctClass = classPool.get(className);
+
         //解冻可以多次修改
         ctClass.defrost();
         CtMethod ctMethod = ctClass.getDeclaredMethod(methodName);

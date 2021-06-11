@@ -28,17 +28,6 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.11</version>
         </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.2.19</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google/gson -->
-        <dependency>
-            <groupId>com.google</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.7</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/commons-dbutils/commons-dbutils -->
         <dependency>
             <groupId>commons-dbutils</groupId>
@@ -51,13 +40,6 @@
             <artifactId>lombok</artifactId>
             <version>1.16.22</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.activemq/activemq-all -->
-        <dependency>
-            <groupId>org.apache.activemq</groupId>
-            <artifactId>activemq-all</artifactId>
-            <version>5.16.1</version>
-        </dependency>
-
 
         <!-- mybatis plus 代码生成器 -->
         <dependency>
@@ -79,18 +61,6 @@
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.47</version>
-        </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>com.travelsky.adap</groupId>-->
-<!--            <artifactId>re-infra-quartz</artifactId>-->
-<!--            <version>2.0.0</version>-->
-<!--        </dependency>-->
-
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-            <version>1.4.7</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/javassist/javassist -->

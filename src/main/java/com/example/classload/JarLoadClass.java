@@ -1,4 +1,4 @@
-package com.example.config;
+package com.example.classload;
 
 import com.example.classload.ModuleClassLoader;
 import org.springframework.beans.BeansException;
