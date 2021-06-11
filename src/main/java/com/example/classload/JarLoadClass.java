@@ -35,7 +35,7 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
     public static ModuleClassLoader moduleClassLoader;
 
     @PostMapping({"/jarLoad"})
-    public void jarLoad(@RequestBody String libDir) {
+    public String jarLoad(@RequestBody String libDir) {
         try {
             File libPath = new File(libDir);
             // 获取所有的.jar和.zip文件
@@ -53,13 +53,14 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
             moduleClassLoader = new ModuleClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
             Thread.currentThread().setContextClassLoader(moduleClassLoader);
             //遍历每一个jar
-            handJarFiles(jarFiles);
+            int count = handJarFiles(jarFiles);
+            return "加载外部jar包的实例个数:" + count;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void handJarFiles(File[] jarFiles) throws Exception {
+    public int handJarFiles(File[] jarFiles) throws Exception {
         HashSet<Class> needLoadClass = new HashSet<>();
         for (File file : jarFiles) {
             JarFile jarFile = new JarFile(file.getAbsoluteFile());
@@ -84,11 +85,11 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
                 }
             }
         }
-        System.out.println("加载外部jar包的实例个数:" + needLoadClass.size());
         //实例化和属性注入
         iocAndDI(needLoadClass);
         //使实例中的@Controller和@RequestMapping等注解生效
         processCandidateBean(needLoadClass);
+        return needLoadClass.size();
     }
 
     private void processCandidateBean(Set<Class> extClass) throws Exception {
