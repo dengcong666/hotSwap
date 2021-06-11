@@ -11,31 +11,31 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.DispatcherServlet;
-import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.servlet.handler.AbstractHandlerMethodMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 @RestController
-public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegistryPostProcessor {
+public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegistryPostProcessor {
 
-    public static ApplicationContext applicationContext;
-    public static BeanDefinitionRegistry beanDefinitionRegistry;
-    public static ConfigurableListableBeanFactory configurableListableBeanFactory;
+    private static ApplicationContext applicationContext;
+    private static BeanDefinitionRegistry beanDefinitionRegistry;
+    private static ConfigurableListableBeanFactory configurableListableBeanFactory;
+    private static Set<String> alreadyLoadClass = new HashSet<>();
+    public static ModuleClassLoader moduleClassLoader;
 
-    @RequestMapping({"/refresh"})
-    public void refresh(@RequestBody String libDir) {
+    @PostMapping({"/jarLoad"})
+    public void jarLoad(@RequestBody String libDir) {
         try {
             File libPath = new File(libDir);
             // 获取所有的.jar和.zip文件
@@ -50,7 +50,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
                 urls.add(url);
             }
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            ModuleClassLoader moduleClassLoader = new ModuleClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
+            moduleClassLoader = new ModuleClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
             Thread.currentThread().setContextClassLoader(moduleClassLoader);
             //遍历每一个jar
             handJarFiles(jarFiles);
@@ -60,7 +60,7 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
     }
 
     public void handJarFiles(File[] jarFiles) throws Exception {
-        System.out.println("加载外部jar包前实例个数:" + applicationContext.getBeanDefinitionCount());
+        HashSet<Class> needLoadClass = new HashSet<>();
         for (File file : jarFiles) {
             JarFile jarFile = new JarFile(file.getAbsoluteFile());
             Enumeration<JarEntry> entries = jarFile.entries();
@@ -78,42 +78,44 @@ public class RefreshClass implements ApplicationContextAware, BeanDefinitionRegi
                 //加载.class文件 ,完成运行时的控制反转和依赖注入
                 String className = name.substring(0, name.length() - 6).replace("/", ".");
                 Class<?> beanClazz = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
-                //实例化和属性注入
-                iocAndDI(beanClazz);
-            }
-        }
-        System.out.println("加载外部jar包之后实例个数:" + applicationContext.getBeanDefinitionCount());
-        //使实例中的@Controller和@RequestMapping等注解生效
-        DispatcherServlet dispatcherServlet = applicationContext.getBean(DispatcherServlet.class);
-        refresh(dispatcherServlet);
-    }
-
-    private static void iocAndDI(Class<?> beanClazz) {
-        Component annotation = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Component.class);
-        if (annotation != null) {
-            BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(beanClazz);
-            GenericBeanDefinition beanDefinition = (GenericBeanDefinition) builder.getRawBeanDefinition();
-            beanDefinition.setBeanClass(beanClazz);
-            beanDefinition.setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_TYPE);
-            String simpleName = beanClazz.getSimpleName();
-            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
-            beanDefinitionRegistry.registerBeanDefinition(simpleName, beanDefinition);
-        }
-    }
-
-    private static void refresh(DispatcherServlet dispatcherServlet) {
-        try {
-            List<HandlerMapping> handlerMappings = dispatcherServlet.getHandlerMappings();
-            for (HandlerMapping o : handlerMappings) {
-                if (o instanceof RequestMappingHandlerMapping) {
-                    ((RequestMappingHandlerMapping) o).afterPropertiesSet();
+                if (!alreadyLoadClass.contains(className)) {
+                    alreadyLoadClass.add(className);
+                    needLoadClass.add(beanClazz);
                 }
             }
-        } catch (Exception e) {
-            System.out.println(e);
+        }
+        System.out.println("加载外部jar包的实例个数:" + needLoadClass.size());
+        //实例化和属性注入
+        iocAndDI(needLoadClass);
+        //使实例中的@Controller和@RequestMapping等注解生效
+        processCandidateBean(needLoadClass);
+    }
+
+    private void processCandidateBean(Set<Class> extClass) throws Exception {
+        RequestMappingHandlerMapping requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
+        Method processCandidateBean = AbstractHandlerMethodMapping.class.getDeclaredMethod("processCandidateBean", String.class);
+        processCandidateBean.setAccessible(true);
+        for (Class beanClazz : extClass) {
+            String simpleName = beanClazz.getSimpleName();
+            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
+            processCandidateBean.invoke(requestMappingHandlerMapping, simpleName);
         }
     }
 
+    private static void iocAndDI(Set<Class> extClass) {
+        for (Class beanClazz : extClass) {
+            Component annotation = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Component.class);
+            if (annotation != null) {
+                BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(beanClazz);
+                GenericBeanDefinition beanDefinition = (GenericBeanDefinition) builder.getRawBeanDefinition();
+                beanDefinition.setBeanClass(beanClazz);
+                beanDefinition.setAutowireMode(GenericBeanDefinition.AUTOWIRE_BY_TYPE);
+                String simpleName = beanClazz.getSimpleName();
+                simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
+                beanDefinitionRegistry.registerBeanDefinition(simpleName, beanDefinition);
+            }
+        }
+    }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
