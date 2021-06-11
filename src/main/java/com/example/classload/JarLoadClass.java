@@ -1,6 +1,5 @@
 package com.example.classload;
 
-import com.example.classload.ModuleClassLoader;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -21,6 +20,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -32,7 +32,7 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
     private static BeanDefinitionRegistry beanDefinitionRegistry;
     private static ConfigurableListableBeanFactory configurableListableBeanFactory;
     private static Set<String> alreadyLoadClass = new HashSet<>();
-    public static ModuleClassLoader moduleClassLoader;
+    public static URLClassLoader urlClassLoader;
 
     @PostMapping({"/jarLoad"})
     public String jarLoad(@RequestBody String libDir) {
@@ -50,8 +50,8 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
                 urls.add(url);
             }
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            moduleClassLoader = new ModuleClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
-            Thread.currentThread().setContextClassLoader(moduleClassLoader);
+            urlClassLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
+            Thread.currentThread().setContextClassLoader(urlClassLoader);
             //遍历每一个jar
             int count = handJarFiles(jarFiles);
             return "加载外部jar包的实例个数:" + count;
@@ -76,11 +76,11 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
                 if (jarEntry.isDirectory() || !name.endsWith(".class")) {
                     continue;
                 }
-                //加载.class文件 ,完成运行时的控制反转和依赖注入
                 String className = name.substring(0, name.length() - 6).replace("/", ".");
-                Class<?> beanClazz = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
+                //重复.class文件不加载
                 if (!alreadyLoadClass.contains(className)) {
-                    alreadyLoadClass.add(className);
+                    Class<?> beanClazz = Thread.currentThread().getContextClassLoader().loadClass(className);
+                    alreadyLoadClass.add(beanClazz.getName());
                     needLoadClass.add(beanClazz);
                 }
             }

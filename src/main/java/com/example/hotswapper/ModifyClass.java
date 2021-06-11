@@ -20,7 +20,7 @@ public class ModifyClass {
         //需要引入 tools.jar
         //VM options -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=40000  配置JRE
         ClassPool classPool = ClassPool.getDefault();
-        classPool.appendClassPath(new LoaderClassPath(JarLoadClass.moduleClassLoader));
+        classPool.appendClassPath(new LoaderClassPath(JarLoadClass.urlClassLoader));
         CtClass ctClass = classPool.get(className);
 
         //解冻可以多次修改
