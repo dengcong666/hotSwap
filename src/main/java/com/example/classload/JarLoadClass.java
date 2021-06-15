@@ -32,18 +32,14 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
     private static BeanDefinitionRegistry beanDefinitionRegistry;
     private static ConfigurableListableBeanFactory configurableListableBeanFactory;
     private static Set<String> alreadyLoadClass = new HashSet<>();
-    public static URLClassLoader urlClassLoader;
+    public static URLClassLoader urlClassLoader = null;
 
     @PostMapping({"/jarLoad"})
     public String jarLoad(@RequestBody String libDir) {
         try {
             File libPath = new File(libDir);
-            // 获取所有的.jar和.zip文件
-            File[] jarFiles = libPath.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(".jar");
-                }
-            });
+            // 获取所有的.jar后缀文件
+            File[] jarFiles = libPath.listFiles((dir, name) -> name.endsWith(".jar"));
             List<URL> urls = new ArrayList<>();
             for (File file : jarFiles) {
                 URL url = file.toURI().toURL();
@@ -52,15 +48,19 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
             urlClassLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
             Thread.currentThread().setContextClassLoader(urlClassLoader);
-            //遍历每一个jar
-            int count = handJarFiles(jarFiles);
-            return "加载外部jar包的实例个数:" + count;
+            //遍历jar包得到HashSet<Class>, 不包含重复的class
+            HashSet<Class> needLoadClass = handJarFiles(jarFiles);
+            //实例化和属性注入
+            iocAndDI(needLoadClass);
+            //使实例中的@Controller和@RequestMapping等注解生效
+            processCandidateBean(needLoadClass);
+            return "加载外部jar包的实例个数:" + needLoadClass.size();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public int handJarFiles(File[] jarFiles) throws Exception {
+    public HashSet<Class> handJarFiles(File[] jarFiles) throws Exception {
         HashSet<Class> needLoadClass = new HashSet<>();
         for (File file : jarFiles) {
             JarFile jarFile = new JarFile(file.getAbsoluteFile());
@@ -85,11 +85,7 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
                 }
             }
         }
-        //实例化和属性注入
-        iocAndDI(needLoadClass);
-        //使实例中的@Controller和@RequestMapping等注解生效
-        processCandidateBean(needLoadClass);
-        return needLoadClass.size();
+        return needLoadClass;
     }
 
     private void processCandidateBean(Set<Class> extClass) throws Exception {
