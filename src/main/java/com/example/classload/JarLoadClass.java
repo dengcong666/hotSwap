@@ -17,7 +17,6 @@ import org.springframework.web.servlet.handler.AbstractHandlerMethodMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -32,7 +31,7 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
     private static BeanDefinitionRegistry beanDefinitionRegistry;
     private static ConfigurableListableBeanFactory configurableListableBeanFactory;
     private static Set<String> alreadyLoadClass = new HashSet<>();
-    public static URLClassLoader urlClassLoader = null;
+    public static ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
     @PostMapping({"/jarLoad"})
     public String jarLoad(@RequestBody String libDir) {
@@ -45,9 +44,8 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
                 URL url = file.toURI().toURL();
                 urls.add(url);
             }
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            urlClassLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
-            Thread.currentThread().setContextClassLoader(urlClassLoader);
+            classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), classLoader);
+            Thread.currentThread().setContextClassLoader(classLoader);
             //遍历jar包得到HashSet<Class>, 不包含重复的class
             HashSet<Class> needLoadClass = handJarFiles(jarFiles);
             //实例化和属性注入
@@ -60,7 +58,7 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
         }
     }
 
-    public HashSet<Class> handJarFiles(File[] jarFiles) throws Exception {
+    public static HashSet<Class> handJarFiles(File[] jarFiles) throws Exception {
         HashSet<Class> needLoadClass = new HashSet<>();
         for (File file : jarFiles) {
             JarFile jarFile = new JarFile(file.getAbsoluteFile());
@@ -88,7 +86,7 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
         return needLoadClass;
     }
 
-    private void processCandidateBean(Set<Class> extClass) throws Exception {
+    public static void processCandidateBean(Set<Class> extClass) throws Exception {
         RequestMappingHandlerMapping requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
         Method processCandidateBean = AbstractHandlerMethodMapping.class.getDeclaredMethod("processCandidateBean", String.class);
         processCandidateBean.setAccessible(true);
@@ -99,7 +97,7 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
         }
     }
 
-    private static void iocAndDI(Set<Class> extClass) {
+    public static void iocAndDI(Set<Class> extClass) {
         for (Class beanClazz : extClass) {
             Component annotation = AnnotatedElementUtils.findMergedAnnotation(beanClazz, Component.class);
             if (annotation != null) {
