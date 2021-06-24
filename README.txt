@@ -27,3 +27,12 @@ postman请求 http://127.0.0.1:8081/changeMethod  from-data
 之后再次请求 http://127.0.0.1:8081/xxx  返回 "哈哈哈"而不是Person信息,
 说明改变了com.example.test.TestController.xxx的执行逻辑
 
+
+
+动态编译并加载：需要引入javassist
+动态编译并加载：需要引入javassist
+动态编译并加载：需要引入javassist
+把TestController.java，Person.java两个文件放到E:/code 
+postman请求	http://127.0.0.1:8081/javaFileLoad?dir=E:/code  （dir是java代码所在文件夹）
+执行后可以看到文件夹下多了两个class文件
+请求 http://127.0.0.1:8081/xxx 成功返回
