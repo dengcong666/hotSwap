@@ -18,6 +18,7 @@ postman再次请求 http://127.0.0.1:8081/xxx 成功返回
 字节码替换技术实现方法的逻辑替换：引入javassist，tools.jar 设置VM options
 字节码替换技术实现方法的逻辑替换：引入javassist，tools.jar 设置VM options
 字节码替换技术实现方法的逻辑替换：引入javassist，tools.jar 设置VM options
+VM options -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
 
 此时调用http://127.0.0.1:8081/xxx请求 响应的是Person信息
 postman请求 http://127.0.0.1:8081/changeMethod  from-data 
