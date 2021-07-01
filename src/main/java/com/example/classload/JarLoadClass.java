@@ -10,8 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.handler.AbstractHandlerMethodMapping;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -33,12 +32,12 @@ public class JarLoadClass implements ApplicationContextAware, BeanDefinitionRegi
     private static Set<String> alreadyLoadClass = new HashSet<>();
     public static ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
-    @PostMapping({"/jarLoad"})
-    public String jarLoad(@RequestBody String libDir) {
+    @RequestMapping({"/jarLoad"})
+    public String jarLoad(String dir) {
         try {
-            File libPath = new File(libDir);
+            File libPath = new File(dir);
             // 获取所有的.jar后缀文件
-            File[] jarFiles = libPath.listFiles((dir, name) -> name.endsWith(".jar"));
+            File[] jarFiles = libPath.listFiles((p1, name) -> name.endsWith(".jar"));
             List<URL> urls = new ArrayList<>();
             for (File file : jarFiles) {
                 URL url = file.toURI().toURL();
