@@ -22,16 +22,18 @@ public class CompilerAndLoad {
     @RequestMapping({"/javaFileLoad"})
     public String javaFileLoad(String dir) throws Exception {
         String path = System.getProperty("java.class.path");
+        //解压当前jar包
         unJar(path, path.replace(".jar", ""));
-        //将tools.jar拷贝到jre运行环境
-
+        //构建 -classpath编译环境并动态编译
         Boolean compiler = compiler(dir, path.replace(".jar", "") + "/BOOT-INF/lib");
         if (compiler.booleanValue()) {
+            //加载编译后的class文件并使用spring的bean注册
             HashMap<String, String> extClassMap = getExtClassMap(dir);
             JarLoadClass.classLoader = new InnerClassLoad(JarLoadClass.classLoader, extClassMap);
             Thread.currentThread().setContextClassLoader(JarLoadClass.classLoader);
             HashSet<Class> extClassSet = getExtClassSet(extClassMap.keySet());
             JarLoadClass.iocAndDI(extClassSet);
+            //使@RestController注解生效
             JarLoadClass.processCandidateBean(extClassSet);
             return "编译并加载到jvm成功";
         } else {
@@ -122,9 +124,10 @@ public class CompilerAndLoad {
         }
         try {
             //复制tools.jar到jre的lib目录下提供编译支持
-            String toolsJarPath = System.getProperty("java.home") + "/lib/tools.jar";
-            FileCopyUtils.copy(new FileInputStream(libDir + "/tools.jar"), new FileOutputStream(toolsJarPath));
+            String jreToolsJar = System.getProperty("java.home") + "/lib/tools.jar";
+            FileCopyUtils.copy(new FileInputStream(libDir + "/tools-1.8.jar"), new FileOutputStream(jreToolsJar));
         } catch (Exception e) {
+            throw new RuntimeException("复制tools.jar到jre的lib目录下时出错");
         }
         JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
 

@@ -117,10 +117,10 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <includeSystemScope>true</includeSystemScope>
                     <!-- 指定SpringBoot程序的main函数入口类 -->
                     <mainClass>com.example.DemoApplication</mainClass>
                 </configuration>
-
                 <executions>
                     <execution>
                         <goals>
