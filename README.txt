@@ -29,12 +29,13 @@ postman请求 http://127.0.0.1:8081/changeMethod  from-data
 说明改变了com.example.test.TestController.xxx的执行逻辑
 
 
-动态编译技术：引入tools.jar ，项目打包后用解压工具在BOOT-INF/lib目录下增加tools.jar依赖
-动态编译技术：引入tools.jar ，项目打包后用解压工具在BOOT-INF/lib目录下增加tools.jar依赖
-动态编译技术：引入tools.jar ，项目打包后用解压工具在BOOT-INF/lib目录下增加tools.jar依赖
+动态编译技术：引入tools.jar ，项目打包后用解压工具在BOOT-INF/lib目录下增加tools.jar依赖，用压缩工具添加时jar时选择文件选项，该文件不压缩直接存储
+动态编译技术：引入tools.jar ，项目打包后用解压工具在BOOT-INF/lib目录下增加tools.jar依赖，用压缩工具添加时jar时选择文件选项，该文件不压缩直接存储
+动态编译技术：引入tools.jar ，项目打包后用解压工具在BOOT-INF/lib目录下增加tools.jar依赖，用压缩工具添加时jar时选择文件选项，该文件不压缩直接存储
 
 先试试postman请求 http://远程ip:8081/xxx 此时无法访问
 上传java源文件到指定目录 TestController，Person两个java文件
 postman请求 http://远程ip:8081/upload?dir=E:/code  form-data file 选中要上传的文件
 postman请求 http://远程ip:8081/javaFileLoad?dir=E:/code
 这时访问链接 http://远程ip:8081/xxx 可以访问
+可以上传其他功能的@RestController文件,取决于你的脑洞有多大
